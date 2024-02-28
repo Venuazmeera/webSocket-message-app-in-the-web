@@ -229,83 +229,135 @@
 // });
 
 
+// import WebSocket, { WebSocketServer } from "ws";
+// import { parse } from "url";
+// import { v4 as uuidv4 } from "uuid";
+
+// const wss = new WebSocketServer({ port: 3006 });
+
+// // Array to store WebSocket connections
+// const allClients = [];
+// // Array to store all URLs
+// const allUrls = [];
+
+// wss.on("connection", function (ws, req) {
+//     console.log("Connection initiated");
+
+//     // Parse the URL to extract user ID
+//     const parsedUrl = parse(req.url, true);
+//     const userId = parsedUrl.query.id || uuidv4(); // Use the provided userId or generate a unique user ID
+
+//     console.log(parsedUrl.query.id);
+//     console.log("User ID:", userId);
+//     ws.id = userId; //we are setting the ws.id for the initiated client
+
+//     // Store the WebSocket connection in the array
+//     //allClients.push({ userId, ws});
+//     allClients.push(userId); //pushing the user ID into the array
+
+//     // Store the URL in the array
+//     allUrls.push(req.url);
+
+//     // Log all URLs
+//     console.log("All URLs:", allUrls);
+
+//     ws.on("message", function message(msg) {
+//         const data = JSON.parse(msg);
+//         console.log(allClients);
+//         console.log("reciver ID",data.receiverId, typeof(data.receiverId));
+
+//             // Check if the message is intended for a specific user
+//         if (data.type === "message" && data.receiverId) {
+//             const senderUserId = userId; // Get the userId of the sender
+//             // console.log(trim(str));
+//             // Find the target user in the wss.clients array
+//                 // wss.clients.forEach((client)=>{
+//                 //     if(client.id==data.receiverId){
+//                 //         console.log("match found",client.id)
+//                 //     }
+//                 //     console.log(client.id, typeof(client.id))
+//                 // })
+//                 // var targetClient="";
+//                  wss.clients.forEach((client) => {
+//                     console.log(client);
+//                    if(client.id === data.receiverId) {
+//                      if (client !== ws && client.readyState === WebSocket.OPEN) {
+//                                 client.send(JSON.stringify({ type: "message", data: data.data, senderUserId }));
+//                            }
+//                    } else {
+//                     console.log("no client found");
+//                    }
+//                 });
+
+                
+//             //      console.log("target client"+targetClient.);
+//             //     // If the target user is found, send the message with sender's userId
+//             //     if (targetClient && targetClient.ws.readyState === WebSocket.OPEN) {
+//             //         targetClient.ws.send(JSON.stringify({ type: "message", data: data.data, senderUserId }));
+//             //     }
+//             // } else {
+//             //     // Broadcast the message to all clients except the sender with sender's userId
+//             //     // allClients.forEach((client) => {
+//             //     //     if (client.ws !== ws && client.ws.readyState === WebSocket.OPEN) {
+//             //     //         client.ws.send(JSON.stringify({ type: "message", data: data.data, senderUserId }));
+//             //     //     }
+//             //     // });
+//             //     console.log("send error message back to the client");
+//             // }
+//         }
+        
+//      } )
+// });
+
+
 import WebSocket, { WebSocketServer } from "ws";
 import { parse } from "url";
 import { v4 as uuidv4 } from "uuid";
 
 const wss = new WebSocketServer({ port: 3006 });
 
-// Array to store WebSocket connections
-const allClients = [];
-// Array to store all URLs
-const allUrls = [];
+// Object to store WebSocket connections keyed by userId
+const clients = {};
 
 wss.on("connection", function (ws, req) {
     console.log("Connection initiated");
 
     // Parse the URL to extract user ID
     const parsedUrl = parse(req.url, true);
-    const userId = parsedUrl.query.id || uuidv4(); // Use the provided userId or generate a unique user ID
-
+    const userId = decodeURIComponent(parsedUrl.query.id) || uuidv4();
     console.log("User ID:", userId);
-    ws.id = userId; //we are setting the ws.id for the initiated client
+    ws.id = userId; // Assign the userId to the WebSocket connection
 
-    // Store the WebSocket connection in the array
-    //allClients.push({ userId, ws});
-    allClients.push(userId); //pushing the user ID into the array
-
-    // Store the URL in the array
-    allUrls.push(req.url);
-
-    // Log all URLs
-    console.log("All URLs:", allUrls);
+    // Store the WebSocket connection in the clients object
+    clients[userId] = ws;
 
     ws.on("message", function message(msg) {
         const data = JSON.parse(msg);
-        console.log(allClients);
-        console.log("reciver ID",data.receiverId, typeof(data.receiverId));
+        console.log("Received message from", ws.id);
 
-            // Check if the message is intended for a specific user
+        // Check if the message is intended for a specific user
         if (data.type === "message" && data.receiverId) {
-            const senderUserId = userId; // Get the userId of the sender
-            // console.log(trim(str));
-            // Find the target user in the wss.clients array
-                // wss.clients.forEach((client)=>{
-                //     if(client.id==data.receiverId){
-                //         console.log("match found",client.id)
-                //     }
-                //     console.log(client.id, typeof(client.id))
-                // })
-                // var targetClient="";
-                 wss.clients.forEach((client) => {
-                    console.log(client);
-                   if(client.id === data.receiverId) {
-                     if (client !== ws && client.readyState === WebSocket.OPEN) {
-                                client.send(JSON.stringify({ type: "message", data: data.data, senderUserId }));
-                           }
-                   } else {
-                    console.log("no client found");
-                   }
-                });
+            const receiverId = data.receiverId;
+            const targetClient = clients[receiverId];
 
-                
-            //      console.log("target client"+targetClient.);
-            //     // If the target user is found, send the message with sender's userId
-            //     if (targetClient && targetClient.ws.readyState === WebSocket.OPEN) {
-            //         targetClient.ws.send(JSON.stringify({ type: "message", data: data.data, senderUserId }));
-            //     }
-            // } else {
-            //     // Broadcast the message to all clients except the sender with sender's userId
-            //     // allClients.forEach((client) => {
-            //     //     if (client.ws !== ws && client.ws.readyState === WebSocket.OPEN) {
-            //     //         client.ws.send(JSON.stringify({ type: "message", data: data.data, senderUserId }));
-            //     //     }
-            //     // });
-            //     console.log("send error message back to the client");
-            // }
+            // If the target user is found and the WebSocket is open, send the message
+            if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+                targetClient.send(JSON.stringify({ type: "message", data: data.data, senderUserId: ws.id }));
+            } else {
+                console.log("No client found with the receiverId:", receiverId);
+                // Optionally, send an error message back to the sender
+                ws.send(JSON.stringify({ type: "error", message: "Receiver not found or connection closed." }));
+            }
+        } else {
+            console.log("Message type not supported or receiverId missing.");
         }
-        
-     } )
+    });
+
+    ws.on("close", function close() {
+        console.log("Connection closed for user:", ws.id);
+        // Remove the WebSocket connection from the clients object
+        delete clients[ws.id];
+    });
 });
 
-
+console.log(`WebSocket server is running on port 3006.`);
