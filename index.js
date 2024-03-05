@@ -309,10 +309,15 @@
 //      } )
 // });
 
-
+import express from 'express';
+import { createServer } from 'http';
 import WebSocket, { WebSocketServer } from "ws";
 import { parse } from "url";
 import { v4 as uuidv4 } from "uuid";
+
+
+const app = express();
+const server = createServer(app);
 
 const wss = new WebSocketServer({ port: 3006 });
 
