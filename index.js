@@ -319,7 +319,8 @@ import { v4 as uuidv4 } from "uuid";
 const app = express();
 const server = createServer(app);
 
-const wss = new WebSocketServer({ port: 3006 });
+// const wss = new WebSocketServer({ port: 3006 });
+const wss = new WebSocketServer({ noServer: true });
 
 // Object to store WebSocket connections keyed by userId
 const clients = {};
@@ -373,4 +374,23 @@ wss.on("connection", function (ws, req) {
     });
 });
 
-console.log(`WebSocket server is running on port 3006.`);
+// Handle upgrade of the request
+server.on('upgrade', function upgrade(request, socket, head) {
+    const { pathname } = parse(request.url);
+
+    if (pathname === '/') {
+        wss.handleUpgrade(request, socket, head, function done(ws) {
+            wss.emit('connection', ws, request);
+        });
+    } else {
+        socket.destroy();
+    }
+});
+
+// Start the server
+const PORT = process.env.PORT || 3006;
+server.listen(PORT, function() {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+// console.log(`WebSocket server is running on port 3006.`);
