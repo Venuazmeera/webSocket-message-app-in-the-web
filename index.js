@@ -330,8 +330,8 @@ app.get("/", (req, res, next)=>{
     res.json({
         name:"hello",
         message:"i am working"
-    })
-})
+    });
+});
 
 wss.on("connection", function (ws, req) {
     console.log("Connection initiated");
