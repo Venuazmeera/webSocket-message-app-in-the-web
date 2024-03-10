@@ -328,7 +328,7 @@ const clients = {};
 //for testing cyclic or vercel or heroku cloud
 app.get("/", (req, res, next)=>{
     res.json({
-        name:"hello",
+        name:"chat-app",
         message:"i am working"
     });
 });
