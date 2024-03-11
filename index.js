@@ -387,6 +387,12 @@ server.on('upgrade', function upgrade(request, socket, head) {
     }
 });
 
+setInterval(() => {
+    wss.clients.forEach((client) => {
+      client.send(new Date().toTimeString());
+    });
+  }, 1000);
+
 // Start the server
 const PORT = process.env.PORT || 3006;
 server.listen(PORT, function() {
