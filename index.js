@@ -357,7 +357,7 @@ wss.on("connection", function (ws, req) {
 
             // If the target user is found and the WebSocket is open, send the message
             if (targetClient && targetClient.readyState === WebSocket.OPEN) {
-                targetClient.send(JSON.stringify({ type: "message", data: data.data, senderUserId: ws.id }));
+                targetClient.send(JSON.stringify({ type: "message", data: data.data, senderUserId: ws.id, senderName: data.senderName }));
 
             } else {
                 console.log("No client found with the receiverId:", receiverId);
