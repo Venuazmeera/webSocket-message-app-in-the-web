@@ -393,7 +393,7 @@ setInterval(() => {
     wss.clients.forEach((client) => {
       client.send(new Date().toTimeString());
     });
-  }, 1000);
+  }, 10000);
 
 // Start the server
 const PORT = process.env.PORT || 3006;
