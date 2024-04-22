@@ -98,6 +98,7 @@ import WebSocket, { WebSocketServer } from "ws";
 import { parse } from "url";
 import { v4 as uuidv4 } from "uuid";
 
+const { sendNotification } = require('./notificationHandler');
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ noServer: true });
@@ -133,7 +134,7 @@ wss.on("connection", function (ws, req) {
         delete messageQueue[userId]; // Clear the message queue for this user
     }
 
-    ws.on("message", function message(msg) {
+    ws.on("message", async function message(msg) {
         const data = JSON.parse(msg);
         console.log(data);
         console.log("Received message from", ws.id);
@@ -151,7 +152,19 @@ wss.on("connection", function (ws, req) {
                     messageQueue[receiverId] = [];
                 }
                 messageQueue[receiverId].push({ type: "message", data: data.data, senderUserId: ws.id, senderName: data.senderName });
+
+                // Send a notification to the receiver that they have a new message
+                try {
+                    // You need to have the externalUserId for the receiver to send a notification
+                    // This should be a unique identifier for the user that matches the one used in OneSignal
+                    const externalUserId = receiverId; // Replace this with the actual external user ID if it's different from receiverId
+                    await sendNotification("You have a new message!", [externalUserId]);
+                    console.log(`Notification sent to user ${receiverId}`);
+                } catch (error) {
+                    console.error(`Failed to send notification to user ${receiverId}`, error);
             }
+    
+         }
         } else {
             console.log("Message type not supported or receiverId missing.");
         }

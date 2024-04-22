@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@onesignal/node-onesignal": "^2.0.1-beta2",
     "express": "^4.18.3",
     "url": "^0.11.3",
     "uuid": "^9.0.1",
