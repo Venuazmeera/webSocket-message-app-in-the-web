@@ -1,6 +1,7 @@
 // notificationHandler.js
 
-const OneSignal = require('@onesignal/node-onesignal');
+// const OneSignal = require('@onesignal/node-onesignal');
+import * as OneSignal from '@onesignal/node-onesignal';
 
 async function sendNotification(message, externalUserIds) {
   console.log("hitting notification Router");
@@ -80,6 +81,7 @@ async function sendNotification(message, externalUserIds) {
   }
 }
 
-module.exports = {
-  sendNotification,
-};
+// module.exports = {
+//   sendNotification,
+// };
+export { sendNotification };

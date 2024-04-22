@@ -98,7 +98,7 @@ import WebSocket, { WebSocketServer } from "ws";
 import { parse } from "url";
 import { v4 as uuidv4 } from "uuid";
 
-const { sendNotification } = require('./notificationHandler');
+import { sendNotification } from './notificationHandler.js';
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ noServer: true });
