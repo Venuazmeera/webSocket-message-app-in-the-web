@@ -141,7 +141,8 @@ wss.on("connection", function (ws, req) {
         console.log("Received message from", ws.id);
 
         if (data.type === "message" && data.receiverId) {
-            const receiverId = data.receiverId;
+            const receiverId = "+" + data.receiverId;
+            console.log(receiverId);
             const targetClient = clients[receiverId];
 
             if (targetClient && targetClient.readyState === WebSocket.OPEN) {
