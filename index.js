@@ -194,7 +194,7 @@ setInterval(() => {
     });
 }, 10000);
 
-const PORT = process.env.PORT || 3006;
+const PORT = process.env.PORT || 3009;
 server.listen(PORT, function () {
     console.log(`Server is running on port ${PORT}`);
 });
