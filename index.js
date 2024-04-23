@@ -97,8 +97,9 @@ import { createServer } from 'http';
 import WebSocket, { WebSocketServer } from "ws";
 import { parse } from "url";
 import { v4 as uuidv4 } from "uuid";
+const fetch = require('node-fetch');
 
-import { sendNotification } from './notificationHandler.js';
+// import { sendNotification } from './notificationHandler.js';
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ noServer: true });
@@ -157,8 +158,11 @@ wss.on("connection", function (ws, req) {
                 try {
                     // You need to have the externalUserId for the receiver to send a notification
                     // This should be a unique identifier for the user that matches the one used in OneSignal
-                    const externalUserId = receiverId; // Replace this with the actual external user ID if it's different from receiverId
-                    await sendNotification("You have a new message!", [externalUserId]);
+                    // const externalUserId = receiverId; // Replace this with the actual external user ID if it's different from receiverId
+                    // await sendNotification("You have a new message!", [externalUserId]);
+                    // console.log(`Notification sent to user ${receiverId}`);
+
+                    await sendNotification("You have a new message!", [receiverId]);
                     console.log(`Notification sent to user ${receiverId}`);
                 } catch (error) {
                     console.error(`Failed to send notification to user ${receiverId}`, error);
@@ -187,6 +191,34 @@ server.on('upgrade', function upgrade(request, socket, head) {
         socket.destroy();
     }
 });
+
+
+const sendNotification = async (message, externalUserIds) => {
+    const ONE_SIGNAL_APP_ID = '63fac062-7831-4ccd-b35a-37ed0eaab9bd';
+    const REST_API_KEY = 'Zjc4OGVmYWYtMjA2My00NDJlLTg1YTUtZjUxZDBiYWE0Njc3';
+  
+    const headers = {
+      "Content-Type": "application/json; charset=utf-8",
+      "Authorization": `Basic ${REST_API_KEY}`
+    };
+  
+    const payload = {
+      app_id: ONE_SIGNAL_APP_ID,
+      contents: { "en": message },
+      include_external_user_ids: externalUserIds // Assuming you're using external user IDs
+    };
+  
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(payload)
+    });
+  
+    const data = await response.json();
+    console.log(data);
+    return data;
+  };
+  
 
 setInterval(() => {
     wss.clients.forEach((client) => {
