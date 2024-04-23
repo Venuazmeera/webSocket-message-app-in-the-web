@@ -97,7 +97,7 @@ import { createServer } from 'http';
 import WebSocket, { WebSocketServer } from "ws";
 import { parse } from "url";
 import { v4 as uuidv4 } from "uuid";
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 // import { sendNotification } from './notificationHandler.js';
 const app = express();
