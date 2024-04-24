@@ -215,7 +215,7 @@ const sendNotification = async (message, externalUserIds, senderName, additional
       include_external_user_ids: externalUserIds, // Assuming you're using external user IDs
       data: { // Additional data field
         senderName: senderName,
-        additionalData: data.data
+        additionalData: additionalData
       }
     };
   
