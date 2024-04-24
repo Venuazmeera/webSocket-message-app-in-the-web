@@ -163,7 +163,13 @@ wss.on("connection", function (ws, req) {
                     // await sendNotification("You have a new message!", [externalUserId]);
                     // console.log(`Notification sent to user ${receiverId}`);
 
-                    await sendNotification("You have a new message!", [receiverId]);
+                    const message = "You have a new message!";
+                    const externalUserIds = [receiverId]; // Replace with actual receiver IDs
+                    const senderName = data.senderName; // Replace with actual sender name
+                    const additionalData = data.data; // Replace with actual additional data
+
+                    // await sendNotification("You have a new message!", [receiverId]);
+                    await sendNotification(message, externalUserIds, senderName, additionalData);
                     console.log(`Notification sent to user ${receiverId}`);
                 } catch (error) {
                     console.error(`Failed to send notification to user ${receiverId}`, error);
@@ -194,7 +200,7 @@ server.on('upgrade', function upgrade(request, socket, head) {
 });
 
 
-const sendNotification = async (message, externalUserIds) => {
+const sendNotification = async (message, externalUserIds, senderName, data) => {
     const ONE_SIGNAL_APP_ID = '63fac062-7831-4ccd-b35a-37ed0eaab9bd';
     const REST_API_KEY = 'Zjc4OGVmYWYtMjA2My00NDJlLTg1YTUtZjUxZDBiYWE0Njc3';
   
@@ -206,7 +212,11 @@ const sendNotification = async (message, externalUserIds) => {
     const payload = {
       app_id: ONE_SIGNAL_APP_ID,
       contents: { "en": message },
-      include_external_user_ids: externalUserIds // Assuming you're using external user IDs
+      include_external_user_ids: externalUserIds, // Assuming you're using external user IDs
+      data: { // Additional data field
+        senderName: senderName,
+        data: data.data
+      }
     };
   
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
