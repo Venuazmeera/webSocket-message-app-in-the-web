@@ -200,7 +200,7 @@ server.on('upgrade', function upgrade(request, socket, head) {
 });
 
 
-const sendNotification = async (message, externalUserIds, senderName, data) => {
+const sendNotification = async (message, externalUserIds, senderName, additionalData) => {
     const ONE_SIGNAL_APP_ID = '63fac062-7831-4ccd-b35a-37ed0eaab9bd';
     const REST_API_KEY = 'Zjc4OGVmYWYtMjA2My00NDJlLTg1YTUtZjUxZDBiYWE0Njc3';
   
@@ -215,7 +215,7 @@ const sendNotification = async (message, externalUserIds, senderName, data) => {
       include_external_user_ids: externalUserIds, // Assuming you're using external user IDs
       data: { // Additional data field
         senderName: senderName,
-        data: data.data
+        additionalData: data.data
       }
     };
   
