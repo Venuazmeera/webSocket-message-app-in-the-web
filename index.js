@@ -166,7 +166,7 @@ wss.on("connection", function (ws, req) {
                     // console.log(`Notification sent to user ${receiverId}`);
 
                     const message = "You have a new message!";
-                    const externalUserIds = [receiverId]; // Replace with actual receiver IDs
+                    const externalUserIds = ["+" + receiverId]; // Replace with actual receiver IDs
                     const senderName = data.senderName; // Replace with actual sender name
                     const additionalData = data.data; // Replace with actual additional data
 
