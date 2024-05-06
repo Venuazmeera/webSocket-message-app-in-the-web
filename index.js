@@ -91,13 +91,14 @@
 //     console.log(`Server is running on port ${PORT}`);
 // });
 
-// // console.log(`WebSocket server is running on port 3006.`);
+// console.log(`WebSocket server is running on port 3006.`);
 import express from 'express';
 import { createServer } from 'http';
 import WebSocket, { WebSocketServer } from "ws";
 import { parse } from "url";
 import { v4 as uuidv4 } from "uuid";
 import fetch from 'node-fetch';
+import moment from 'moment';
 
 // import { sendNotification } from './notificationHandler.js';
 const app = express();
@@ -107,9 +108,41 @@ const wss = new WebSocketServer({ noServer: true });
 // Object to store WebSocket connections keyed by userId
 const clients = {};
 
-// Object to store messages for offline users
-const messageQueue = {};
+//this is for online users
+const onlineUsers = [];
 
+// Object to store messages for offline users
+const messageQueue = [];
+
+function getUserIdFromWebSocket(ws) {
+    console.log("this is userId: " + ws.id);
+    return ws.id; // or however you have stored the user ID on the WebSocket object
+    
+}
+
+function broadcastOnlineUsers() {
+    // Create a list of users with their online status and last connected time
+    const usersStatus = Object.keys(clients).map(userId => ({
+      userId: userId,
+      online: clients[userId].online,
+      lastConnected: clients[userId].lastConnected
+    }));
+  
+    const message = JSON.stringify({
+      type: 'onlineUsers',
+      body: {
+        usersStatus // Send the updated users status
+      }
+    });
+  
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  }
+
+  
 app.get("/", (req, res, next) => {
     res.json({
         name: "chat-app",
@@ -118,14 +151,36 @@ app.get("/", (req, res, next) => {
 });
 
 wss.on("connection", function (ws, req) {
+
+    const ip = req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+    console.log(`Connection initiated from IP: ${ip}, User-Agent: ${userAgent}`);
     console.log("Connection initiated");
 
     const parsedUrl = parse(req.url, true);
     const userId = decodeURIComponent(parsedUrl.query.id) || uuidv4();
     console.log("User ID:", userId);
+
+    if (!userId) {
+      console.log("Undefined userId, terminating connection");
+      ws.terminate(); // Close the connection
+      return; // Stop further execution for this connection attempt
+     }
     ws.id = userId;
 
-    clients[userId] = ws;
+    // clients[userId] = ws;
+
+    console.log(clients);
+
+    // Update the clients object with connection status and last connected time
+    clients[userId] = {
+        ws: ws,
+        online: true,
+        lastConnected: moment().toISOString() // Store the current time in ISO format
+    };
+
+    // Broadcast online users
+    broadcastOnlineUsers();
 
     // Check for and send any messages that were queued for this user
     if (messageQueue[userId]) {
@@ -139,6 +194,22 @@ wss.on("connection", function (ws, req) {
         const data = JSON.parse(msg);
         console.log(data);
         console.log("Received message from", ws.id);
+
+        
+        //for status handling
+        if (data.type === 'status') {
+          const userId = data.userId;
+          if (data.status === 'online') {
+            // Update user status to online
+            clients[userId].online = true;
+          } else if (data.status === 'offline') {
+            // Update user status to offline
+            setUserOffline(userId);
+          }
+          broadcastOnlineUsers();
+        }
+
+
 
         if (data.type === "message" && data.receiverId) {
             // const receiverId = "+" + data.receiverId;
@@ -182,12 +253,28 @@ wss.on("connection", function (ws, req) {
         } else {
             console.log("Message type not supported or receiverId missing.");
         }
+        // addOnlineUser(ws);
+        getUserIdFromWebSocket(ws);
     });
 
+    // ws.on("close", function close() {
+    //     console.log("Connection closed for user:", ws.user_id);
+    //     delete clients[ws.user_id];
+
+    //     removeOnlineUser(ws);
+    // });
     ws.on("close", function close() {
-        console.log("Connection closed for user:", ws.id);
-        delete clients[ws.id];
-    });
+        const userId = ws.id; // Assuming ws.id is the userId
+        console.log("Connection closed for user:", userId);
+        
+        if (clients[userId]) {
+          clients[userId].online = false;
+          clients[userId].lastConnected = moment().toISOString(); // Update last connected time
+          broadcastOnlineUsers(); // Broadcast the updated online users list
+          handleUserDisconnect(ws);
+
+        }
+      });
 });
 
 server.on('upgrade', function upgrade(request, socket, head) {
@@ -211,7 +298,8 @@ const sendNotification = async (message, externalUserIds, senderName, additional
       "Content-Type": "application/json; charset=utf-8",
       "Authorization": `Basic ${REST_API_KEY}`
     };
-  
+
+    //notification payload
     const payload = {
       app_id: ONE_SIGNAL_APP_ID,
       contents: { "en": message },
@@ -244,3 +332,32 @@ const PORT = process.env.PORT || 3009;
 server.listen(PORT, function () {
     console.log(`Server is running on port ${PORT}`);
 });
+
+
+// Function to update user status to offline
+function setUserOffline(userId) {
+  if (clients[userId]) {
+    clients[userId].online = false;
+    clients[userId].lastConnected = moment().toISOString();
+    broadcastOnlineUsers();
+  }
+}
+
+// Function to handle user disconnection
+function handleUserDisconnect(ws) {
+  const userId = getUserIdFromWebSocket(ws);
+  console.log("Connection closed for user:", userId);
+  setUserOffline(userId);
+}
+
+// WebSocket connection event
+wss.on("connection", function (ws, req) {
+  // ... existing connection code ...
+
+  // Handle WebSocket close event
+  ws.on("close", function close() {
+    handleUserDisconnect(ws);
+  });
+});
+//maintain an array with client Id connection status online or offline and last time connected
+//after archiving this build a ws based service to know the user current status
