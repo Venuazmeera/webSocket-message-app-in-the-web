@@ -214,55 +214,100 @@ wss.on("connection", function (ws, req) {
         }
 
 
-
+        //new code
         if (data.type === "message" && data.receiverId) {
-            // const receiverId = "+" + data.receiverId;
             const receiverId = data.receiverId;
-
             console.log("this is the receiverId", receiverId);
 
-            // const targetClient = clients[receiverId];
-            const targetClient = clients[receiverId].ws;
+            // Check if the client exists before accessing .ws
+            if (clients[receiverId]) {
 
+                console.log(clients[receiverId]);
+                
+                const targetClient = clients[receiverId].ws;
+                console.log("this is the client: ", targetClient);
 
-            console.log("this is  the client: ",targetClient);
+                if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+                    targetClient.send(JSON.stringify({ type: "message", data: data.data, senderUserId: ws.id, senderName: data.senderName }));
+                } else {
+                    console.log("Receiver is offline, queuing message");
+                    // Store the message in the queue for the receiver
+                    if (!messageQueue[receiverId]) {
+                        messageQueue[receiverId] = [];
+                    }
+                    messageQueue[receiverId].push({ type: "message", data: data.data, senderUserId: ws.id, senderName: data.senderName });
 
+                    // Send a notification to the receiver that they have a new message
+                    try {
+                        const message = `You have a new message from ${data.senderName}: ${data.data}`;
+                        const externalUserIds = ["+" + receiverId]; // Replace with actual receiver IDs
+                        const senderName = data.senderName; // Replace with actual sender name
+                        const additionalData = data.data; // Replace with actual additional data
 
-            if (targetClient && targetClient.readyState === WebSocket.OPEN) {
-                targetClient.send(JSON.stringify({ type: "message", data: data.data, senderUserId: ws.id, senderName: data.senderName }));
-            } else {
-                console.log("Receiver is offline, queuing message");
-                // Store the message in the queue for the receiver
-                if (!messageQueue[receiverId]) {
-                    messageQueue[receiverId] = [];
+                        await sendNotification(message, externalUserIds, senderName, additionalData);
+                        console.log(`Notification sent to user ${receiverId}`);
+                    } catch (error) {
+                        console.error(`Failed to send notification to user ${receiverId}`, error);
+                    }
                 }
-                messageQueue[receiverId].push({ type: "message", data: data.data, senderUserId: ws.id, senderName: data.senderName });
-
-                // Send a notification to the receiver that they have a new message
-                try {
-                    // You need to have the externalUserId for the receiver to send a notification
-                    // This should be a unique identifier for the user that matches the one used in OneSignal
-                    // const externalUserId = receiverId; // Replace this with the actual external user ID if it's different from receiverId
-                    // await sendNotification("You have a new message!", [externalUserId]);
-                    // console.log(`Notification sent to user ${receiverId}`);
-
-                    // const message = "You have a new message!";
-                    const message = `You have a new message from ${data.senderName}: ${data.data}`;
-                    const externalUserIds = ["+" + receiverId]; // Replace with actual receiver IDs
-                    const senderName = data.senderName; // Replace with actual sender name
-                    const additionalData = data.data; // Replace with actual additional data
-
-                    // await sendNotification("You have a new message!", [receiverId]);
-                    await sendNotification(message, externalUserIds, senderName, additionalData);
-                    console.log(`Notification sent to user ${receiverId}`);
-                } catch (error) {
-                    console.error(`Failed to send notification to user ${receiverId}`, error);
+            } else {
+                console.error(`Client with receiverId ${receiverId} does not exist.`);
             }
-    
-         }
         } else {
             console.log("Message type not supported or receiverId missing.");
         }
+
+
+        //this old logic that crashing
+
+        // if (data.type === "message" && data.receiverId) {
+        //     // const receiverId = "+" + data.receiverId;
+        //     const receiverId = data.receiverId;
+
+        //     console.log("this is the receiverId", receiverId);
+
+        //     // const targetClient = clients[receiverId];
+        //     const targetClient = clients[receiverId].ws;
+
+
+        //     console.log("this is  the client: ",targetClient);
+
+
+        //     if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+        //         targetClient.send(JSON.stringify({ type: "message", data: data.data, senderUserId: ws.id, senderName: data.senderName }));
+        //     } else {
+        //         console.log("Receiver is offline, queuing message");
+        //         // Store the message in the queue for the receiver
+        //         if (!messageQueue[receiverId]) {
+        //             messageQueue[receiverId] = [];
+        //         }
+        //         messageQueue[receiverId].push({ type: "message", data: data.data, senderUserId: ws.id, senderName: data.senderName });
+
+        //         // Send a notification to the receiver that they have a new message
+        //         try {
+        //             // You need to have the externalUserId for the receiver to send a notification
+        //             // This should be a unique identifier for the user that matches the one used in OneSignal
+        //             // const externalUserId = receiverId; // Replace this with the actual external user ID if it's different from receiverId
+        //             // await sendNotification("You have a new message!", [externalUserId]);
+        //             // console.log(`Notification sent to user ${receiverId}`);
+
+        //             // const message = "You have a new message!";
+        //             const message = `You have a new message from ${data.senderName}: ${data.data}`;
+        //             const externalUserIds = ["+" + receiverId]; // Replace with actual receiver IDs
+        //             const senderName = data.senderName; // Replace with actual sender name
+        //             const additionalData = data.data; // Replace with actual additional data
+
+        //             // await sendNotification("You have a new message!", [receiverId]);
+        //             await sendNotification(message, externalUserIds, senderName, additionalData);
+        //             console.log(`Notification sent to user ${receiverId}`);
+        //         } catch (error) {
+        //             console.error(`Failed to send notification to user ${receiverId}`, error);
+        //     }
+    
+        //  }
+        // } else {
+        //     console.log("Message type not supported or receiverId missing.");
+        // }
         // addOnlineUser(ws);
         getUserIdFromWebSocket(ws);
     });
