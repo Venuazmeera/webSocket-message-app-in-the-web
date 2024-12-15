@@ -242,7 +242,7 @@ wss.on("connection", function (ws, req) {
                         const message = `You have a new message from ${data.senderName}: ${data.data}`;
                         const externalUserIds = ["+" + receiverId]; // Replace with actual receiver IDs
                         const senderName = data.senderName; // Replace with actual sender name
-                        const additionalData = data.data; // Replace with actual additional data
+                        const additionalData = data.data.message; // Replace with actual additional data
 
                         await sendNotification(message, externalUserIds, senderName, additionalData);
                         console.log(`Notification sent to user ${receiverId}`);
