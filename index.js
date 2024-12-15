@@ -239,7 +239,7 @@ wss.on("connection", function (ws, req) {
 
                     // Send a notification to the receiver that they have a new message
                     try {
-                        const message = `You have a new message from ${data.senderName}: ${data.data}`;
+                        const message = `You have a new message from ${data.senderName}: ${data.data.message}`;
                         const externalUserIds = ["+" + receiverId]; // Replace with actual receiver IDs
                         const senderName = data.senderName; // Replace with actual sender name
                         const additionalData = data.data.message; // Replace with actual additional data
